@@ -70,7 +70,7 @@ Foreign-key constraints:
 
 ```
 SQL запрос для выдачи списка пользователей с правами над таблицами test_db:  
-`SELECT * from information_schema.table_privileges where grantee = 'test-admin-user' or grantee = 'test-simple-user' order by grantee, table_name;`
+`SELECT * from information_schema.table_privileges where grantee = 'test-admin-user' or grantee = 'test-simple-user' order by grantee, table_name;`  
 Список пользователей с правами над таблицами test_db:  
 ```
 test_db=# SELECT * from information_schema.table_privileges where grantee = 'test-admin-user' or grantee = 'test-simple-user' order by grantee, table_name;
@@ -100,3 +100,53 @@ test_db=# SELECT * from information_schema.table_privileges where grantee = 'tes
  postgres | test-simple-user | test_db       | public       | orders     | SELECT         | NO           | YES
 (22 rows)
 ```
+## 3
+Кол-во записей для каждой таблицы:  
+Запрос: `SELECT COUNT(*) as orders_count FROM orders;`  
+```
+ orders_count 
+--------------
+            5
+(1 row)
+```
+Запрос: `SELECT COUNT(*) as clients_count FROM clients;`
+```
+ clients_count 
+---------------
+             5
+(1 row)
+
+```
+## 4
+SQL запросы:
+```
+UPDATE clients SET "order" = (SELECT id from orders WHERE name = 'Книга') WHERE soname = 'Иванов Иван Иванович';
+UPDATE clients SET "order" = (SELECT id from orders WHERE name = 'Монитор') WHERE soname = 'Петров Пётр Петрович';
+UPDATE clients SET "order" = (SELECT id from orders WHERE name = 'Гитара') WHERE soname = 'Иоганн Себастьян Бах';
+```
+SQL запрос для выдачи всех пользователей, которые совершили заказ, а также вывод данного запроса.  
+`SELECT soname from clients where "order" is NOT NULL` 
+Вывод:  
+```
+        soname        
+----------------------
+ Иванов Иван Иванович
+ Петров Пётр Петрович
+ Иоганн Себастьян Бах
+(3 rows)
+
+```
+## 5
+```
+test_db=# EXPLAIN SELECT soname from clients where "order" is NOT NULL;
+                       QUERY PLAN                       
+--------------------------------------------------------
+ Seq Scan on clients  (cost=0.00..1.05 rows=5 width=32)
+   Filter: ("order" IS NOT NULL)
+(2 rows)
+
+```
+cost=0.00 -- Приблизительная стоимость запуска. Это время, которое проходит, прежде чем начнётся этап вывода данных  
+1.05 -- Приблизительная общая стоимость  
+rows=5 -- Ожидаемое число строк, которое нужно просмотреть  
+width=32 -- Ожидаемый средний размер строк в байтах  
